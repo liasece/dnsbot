@@ -1,3 +1,5 @@
+Automatically listens to your local IP and updates your DNS record on Namesilo etc.
+
 # Run with shell
 
 ```shell
