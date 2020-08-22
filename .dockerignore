@@ -1,0 +1,6 @@
+.vscode
+.git
+Dockerfile*
+.gitignore
+.cache
+.log
