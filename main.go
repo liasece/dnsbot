@@ -23,6 +23,7 @@ func (i *arrayFlags) Set(value string) error {
 
 func main() {
 	fServer := flag.String("s", "namesilo", "The dns service name.")
+	ipGetterServer := flag.String("p", "http://ifconfig.me", "The get host external ip service host.")
 	fKey := flag.String("k", "***your key***", " To be replaced by your unique API key. Visit the API Manager page within your account for details.")
 	fDomainURLs := &arrayFlags{}
 	flag.Var(fDomainURLs, "d", "The domain associated list with the DNS resource record to modify")
@@ -44,7 +45,7 @@ func main() {
 
 	switch *fServer {
 	case "namesilo":
-		namesilo.Run(*fInterval, 0, *fKey, domains)
+		namesilo.Run(*fInterval, 0, *fKey, domains, *ipGetterServer)
 	default:
 		log.Error("unknown server name", log.String("server", *fServer))
 	}

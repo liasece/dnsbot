@@ -102,7 +102,7 @@ func TestRun(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			Run(tt.args.interval, tt.args.times, tt.args.key, tt.args.domains)
+			Run(tt.args.interval, tt.args.times, tt.args.key, tt.args.domains, "")
 		})
 	}
 }

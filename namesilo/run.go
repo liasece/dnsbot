@@ -8,21 +8,21 @@ import (
 )
 
 // Run namesilo function. if times == 0, infinite loop
-func Run(interval time.Duration, times int, key string, domains map[string]*util.ListenDomain) {
+func Run(interval time.Duration, times int, key string, domains map[string]*util.ListenDomain, ipGetterServer string) {
 	if len(domains) < 1 {
 		log.Error("no domain in list", log.Reflect("domains", domains))
 		return
 	}
-	updateDNSLoop(interval, times, key, domains)
+	updateDNSLoop(interval, times, key, domains, ipGetterServer)
 }
 
-func updateDNSLoop(interval time.Duration, times int, key string, domains map[string]*util.ListenDomain) {
+func updateDNSLoop(interval time.Duration, times int, key string, domains map[string]*util.ListenDomain, ipGetterServer string) {
 	tick := time.NewTicker(interval)
 	defer tick.Stop()
 	runTimes := 0
 	do := func() {
 		for _, domain := range domains {
-			err := checkDomain(key, domain)
+			err := checkDomain(key, domain, ipGetterServer)
 			if err != nil {
 				log.Error("Update DNS record failed", log.Reflect("domain", domain), log.ErrorField(err))
 			}
@@ -47,7 +47,11 @@ func updateDNSLoop(interval time.Duration, times int, key string, domains map[st
 	}
 }
 
-func checkDomain(key string, domain *util.ListenDomain) error {
+func checkDomain(key string, domain *util.ListenDomain, ipGetterServer string) error {
+	externalIP, err := util.GetHostExternalIP(ipGetterServer)
+	if err != nil {
+		return err
+	}
 	listResp, err := dnsList(domain.Domain, key)
 	if err != nil {
 		return err
@@ -62,15 +66,15 @@ func checkDomain(key string, domain *util.ListenDomain) error {
 		// find the one need to be updated
 		for _, item := range listResp.ListReply.DNSRecords {
 			if item.Host == fullHost {
-				if item.Value != listResp.Request.IP {
+				if item.Value != externalIP {
 					// update record
-					log.Info("Update dns record IP", log.String("host", item.Host), log.String("oldIP", item.Value), log.String("newIP", listResp.Request.IP))
-					err = dnsUpdate(key, domain.Domain, item.RecordID, host, listResp.Request.IP)
+					log.Info("Update dns record IP", log.String("host", item.Host), log.String("oldIP", item.Value), log.String("newIP", externalIP))
+					err = dnsUpdate(key, domain.Domain, item.RecordID, host, externalIP)
 					if err != nil {
 						return err
 					}
 				} else {
-					log.Info("Nothing to do", log.String("host", item.Host), log.String("recordedIP", item.Value), log.String("localIP", listResp.Request.IP))
+					log.Info("Nothing to do", log.String("host", item.Host), log.String("recordedIP", item.Value), log.String("localIP", externalIP))
 				}
 				find = true
 			}
